@@ -19,6 +19,7 @@ import { ArcaneFactory } from "./amm/ArcaneFactory.sol";
 import { ArcanePair } from "./amm/ArcanePair.sol";
 import { ArcaneQuestIntegration } from "./amm/ArcaneQuestIntegration.sol";
 import { ArcaneRouter } from "./amm/ArcaneRouter.sol";
+import { ILegendaryForge } from "./interfaces/ILegendaryForge.sol";
 
 /**
  * @title GameFacade
@@ -42,6 +43,7 @@ contract GameFacade {
     ArcanePair public immutable arcanePair;
     ArcaneQuestIntegration public immutable arcaneQuestIntegration;
     ArcaneRouter public immutable arcaneRouter;
+    ILegendaryForge public immutable legendaryForge;
 
     // Events
     event CharacterCreated(address indexed player, uint256 characterId);
@@ -66,6 +68,9 @@ contract GameFacade {
     event ArcaneCrafted(address indexed player, uint256 itemId);
     event ArcaneQuestStarted(address indexed player, uint256 questId);
     event ArcaneQuestCompleted(address indexed player, uint256 questId);
+    event LegendaryForgingStarted(address indexed player, uint256 indexed recipeId);
+    event LegendaryMaterialsLocked(address indexed player, uint256 indexed forgingId);
+    event LegendaryForgingCompleted(address indexed player, uint256 indexed forgingId);
 
     constructor(
         address _character,
@@ -83,7 +88,8 @@ contract GameFacade {
         address _arcaneFactory,
         address _arcanePair,
         address _arcaneQuestIntegration,
-        address _arcaneRouter
+        address _arcaneRouter,
+        address _legendaryForge
     ) {
         character = Character(_character);
         equipment = Equipment(_equipment);
@@ -101,6 +107,7 @@ contract GameFacade {
         arcanePair = ArcanePair(_arcanePair);
         arcaneQuestIntegration = ArcaneQuestIntegration(_arcaneQuestIntegration);
         arcaneRouter = ArcaneRouter(_arcaneRouter);
+        legendaryForge = ILegendaryForge(_legendaryForge);
     }
 
     // Character Management
@@ -458,5 +465,34 @@ contract GameFacade {
     function calculateDropRateBonus(address player) internal view returns (uint256) {
         // For now, return a fixed bonus. This can be expanded based on player stats, achievements, etc.
         return 100; // 1% bonus
+    }
+
+    /**
+     * @notice Starts the forging process for a legendary item
+     * @param recipeId The ID of the recipe to forge
+     * @return forgingId The ID of the forging process
+     */
+    function startLegendaryForging(uint256 recipeId) external returns (uint256 forgingId) {
+        legendaryForge.startForging(recipeId);
+        emit LegendaryForgingStarted(msg.sender, recipeId);
+        return forgingId;
+    }
+
+    /**
+     * @notice Locks materials for a legendary forging process
+     * @param forgingId The ID of the forging process
+     */
+    function lockLegendaryMaterials(uint256 forgingId) external {
+        legendaryForge.lockMaterials(forgingId);
+        emit LegendaryMaterialsLocked(msg.sender, forgingId);
+    }
+
+    /**
+     * @notice Completes a legendary forging process
+     * @param forgingId The ID of the forging process
+     */
+    function completeLegendaryForging(uint256 forgingId) external {
+        legendaryForge.completeForging(forgingId);
+        emit LegendaryForgingCompleted(msg.sender, forgingId);
     }
 }
